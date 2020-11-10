@@ -1,0 +1,177 @@
+<!DOCTYPE html> 
+<html>
+  <head></head>
+  <body>
+    <canvas id='game-canvas' width='900', height='700'></canvas>
+  </body>
+  <script>
+    var canvas, canvasContext = '';
+    var ballX = 50;
+    var ballSpeedX = 8;
+    var ballSpeedY = 4;
+    var ballY = 50;
+    var paddleY = 250;
+    var paddleHeight = 200;
+    var radian = 360;
+    var paddleSize = 10;
+    var score = 0;
+    var showStatusScreen = false;
+    var finalScore = 0;
+
+    window.onload = () => {
+      canvas = document.getElementById('game-canvas');
+      canvasContext = canvas.getContext('2d');
+
+      var framePerSecond = 50;
+      
+      setInterval(() => {
+        moveThings();
+        drawThings();
+      }, 1000 / framePerSecond);
+
+      setInterval(() => {
+        timer();
+      }, 20);
+
+      if (!showStatusScreen) {
+        setInterval(() => {
+          radian = radian - radian / 5;
+          score++;
+        }, 1000)
+      }
+
+      canvas.addEventListener('mousedown', (evt) => {
+        if (showStatusScreen) showStatusScreen = false;
+      });
+
+      canvas.addEventListener('mousemove', (evt) => {
+        var mousePos = calculateMousePosition(evt);
+
+        paddleY = mousePos.y - (paddleHeight/2);
+      });
+    }
+
+    var moveThings = () => {
+
+      if (showStatusScreen) {
+        return;
+      }
+      else {
+        ballX += ballSpeedX;
+        ballY += ballSpeedY;
+
+        if (ballX > canvas.width - 30) ballSpeedX *= -1;
+
+        if (ballX < 35) {
+          if (ballY > paddleY && ballY < paddleY + paddleHeight) {
+            ballSpeedX *= -1;
+
+            var deltaY = ballY - (paddleY + paddleHeight/2);
+
+            ballSpeedY = deltaY * 0.35;
+          }
+          else {
+            ballReset();
+          } 
+        }
+      } 
+
+
+      if (ballY > canvas.height - 10 || ballY < 10) ballSpeedY *= -1;
+    }
+
+    var drawThings = () => {
+      if (showStatusScreen) {
+        drawRect(0, 0, canvas.width, canvas.height, 'black');
+        canvasContext.fillStyle = 'white';
+        canvasContext.font ='30px Arial';
+        canvasContext.fillText(`your score: ${finalScore}`, canvas.width / 2 - 90, canvas.height / 2 - 30);
+        canvasContext.fillText(`click to continue`, canvas.width / 2 - 110, canvas.height / 2 + 30);
+
+        return;
+      }
+      else {
+        drawRect(0, 0, canvas.width, canvas.height, 'black');
+        drawRect(canvas.width - 10, 0, 5, canvas.height, 'white');
+        drawRect(20, paddleY, 5, paddleHeight, 'white');
+        drawCircle(ballX, ballY, 10, 'white');
+      }
+    }
+
+    var drawRect = (x, y, width, height, color) => {
+      canvasContext.fillStyle = color;
+      canvasContext.fillRect(x, y, width, height);
+    }
+
+    var drawCircle = (centerX, centerY, radius, color) => {
+      canvasContext.fillStyle = color;
+      canvasContext.beginPath();
+      canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+      canvasContext.fill();
+    }
+
+    var calculateMousePosition = (evt) => {
+      var rect = canvas.getBoundingClientRect();
+      var root = document.documentElement;
+      var mouseX = evt.clientX - rect.left - root.scrollLeft;
+      var mouseY = evt.clientY - rect.top - root.scrollTop;
+
+      return {
+        x: mouseX,
+        y: mouseY
+      }
+    }
+
+    var timer = () => {
+      if (!showStatusScreen) {
+        canvasContext.strokeStyle = '#FF0000';
+        canvasContext.lineWidth = 5;
+        canvasContext.beginPath();
+        canvasContext.arc(canvas.width / 2 - 15, canvas.height / 2 - 50, 30, 0, degreesToRadians(radian), false);
+        canvasContext.stroke();
+
+        canvasContext.font ='13px Arial';
+
+        if (paddleSize > 0) {
+          canvasContext.fillText(`paddle size: ${paddleSize}`, canvas.width / 2 - 50, canvas.height / 2 + 15);
+          canvasContext.fillText(`score: ${score}`, canvas.width / 2 - 50, canvas.height / 2 + 45);
+        }
+        else {
+          canvasContext.fillText(`you are the winner`, canvas.width / 2 - 50, canvas.height / 2 + 15);
+        }
+
+
+        if (radian < 10) {
+          radian = 360;
+          paddleSize--;
+          paddleHeight -= 20;
+        }
+
+        if (paddleSize === 0) {
+          finalScore = score;
+          showStatusScreen = true;
+        }
+      }
+
+    }
+
+    var degreesToRadians = (degrees) => {
+      return (degrees * Math.PI) / 180;
+    }
+
+    var ballReset = () => {
+      paddleHeight = 200;
+      radian = 360;
+      paddleSize = 10;
+      finalScore = score;
+      score = 0; 
+      showStatusScreen = true;
+      ballSpeedX = 8;
+      ballSpeedY = 4;
+      ballX = canvas.width / 2;
+      ballY = canvas.height / 2;
+
+      ballSpeedX *= -1;
+    }
+  </script>
+</html>
